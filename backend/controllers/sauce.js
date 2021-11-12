@@ -36,6 +36,15 @@ exports.getOneSauce = (req, res, next) => {
 };
 
 exports.modifySauce = (req, res, next) => {
+	Sauce.findOne({
+		_id: req.params.id
+	})
+	.then(sauce => {
+		if (sauce.userId !== req.userId) {
+			return res.status(403).json({
+				error: 'Vous n\'avez pas le droit de modifier cette sauce !'
+			});
+		}
 	const sauceObject = req.file ? {
 		...JSON.parse(req.body.sauce),
 		imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -54,6 +63,7 @@ exports.modifySauce = (req, res, next) => {
 		.catch(error => res.status(400).json({
 			error
 		}));
+	})
 };
 
 exports.deleteSauce = (req, res, next) => {
@@ -61,6 +71,11 @@ exports.deleteSauce = (req, res, next) => {
 		_id: req.params.id
 	})
 		.then(sauce => {
+			if (sauce.userId !== req.userId) {
+				return res.status(403).json({
+					error: 'Vous n\'avez pas le droit de supprimer cette sauce !'
+				});
+			}
 			const filename = sauce.imageUrl.split('/images/')[1];
 			fs.unlink(`images/${filename}`, () => {
 				Sauce.deleteOne({
